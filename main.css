@@ -1,0 +1,9 @@
+/*  
+Qlik Sense set the CSS class qv-object-[extension name] on your visualizations and your CSS rules should be prefixed with that.
+https://help.qlik.com/en-US/sense-developer/May2021/Subsystems/Extensions/Content/Sense_Extensions/Howtos/working-with-styling.htm
+
+qv-object-sense-target-chart 
+
+*/
+
+
