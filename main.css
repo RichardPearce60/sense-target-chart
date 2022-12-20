@@ -6,4 +6,43 @@ qv-object-sense-target-chart
 
 */
 
+.qv-object-sense-target-chart .svg-div {
+    background-color: red;
+    padding: 10px;
+}
 
+.qv-object-sense-target-chart .main-legend {
+    background-color: green;
+    padding: 10px;
+}
+
+.qv-object-sense-target-chart .main-legend .target-container {
+    background-color: rgb(85, 85, 85);
+    display: flex;
+    width: 90%;
+    height: 20px;
+    padding: 5px;
+}
+
+.qv-object-sense-target-chart .main-legend .target-child{
+    flex: 1;
+    border: 2px solid yellow;
+}
+
+
+.qv-object-sense-target-chart .main-legend > .performance {
+    background-color: blueviolet;
+    width: 90%;
+    height: 20px;
+    padding: 5px;
+}
+
+
+.center {
+    margin: 0 auto;
+    display: table;
+}
+
+.hide {
+    display: none;
+}

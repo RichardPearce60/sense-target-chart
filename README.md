@@ -72,4 +72,3 @@ Using:
 
 - [D3](https://github.com/d3/d3)
 - [Lodash](https://github.com/lodash/lodash)
-- [fontawesome](https://fontawesome.com/icons?d=gallery)
