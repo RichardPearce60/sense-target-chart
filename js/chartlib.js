@@ -1,8 +1,6 @@
 /* 
     Sense Chart Library 
-
     JSDocs standard for notation
-
 
 */
  

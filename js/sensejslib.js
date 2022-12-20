@@ -32,7 +32,7 @@ define( [], function () {
     }
 
     /**
-     * Determins which index's have values
+     * Determines which index's have values
      * @param {array} names N or X array
      * @param {array} values V array
      * @returns 
@@ -90,7 +90,7 @@ define( [], function () {
     
     /**
      * Converts distinct field values into csv
-     * @param field - Qlik Sense fieldname
+     * @param field - Qlik Sense field name
      * @returns {string} string - "field A, field B, field C" 
      */
     function convertFieldValueCSV (field){ 

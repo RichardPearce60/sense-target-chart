@@ -86,7 +86,7 @@ define([
 
 
 
-
+					if (layout.props.debug) { console.log('layout HC: ', layout.qHyperCube) }
 					if (layout.props.debug) { console.log('scope data: ', scope.data) }
 				};
 
