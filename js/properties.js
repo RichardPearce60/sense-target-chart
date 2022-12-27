@@ -1,33 +1,186 @@
-define( [], function () {
+define([], function () {
 	'use strict';
-	
+
 	// *****************************************************************************
 	// Dimensions & Measures
-	// *****************************************************************************	
+	// *****************************************************************************
 	const dimensions = {
-		uses: "dimensions",
-		min: 0,
-		max: 4,
+		uses: 'dimensions',
+		min: 1,
+		max: 2,
+		type: 'items',
+		items: {
+			MySliderProp: {
+				type: 'string',
+				component: 'expression',
+				label: 'Dimension Colors',
+				ref: 'qAttributeExpressions.0.qExpression', // This places the data: qDataPages[0].qMatrix.[0][1].qAttrExps.qValues[0].qText
+				expression: 'optional',
+			},
+		},
 	};
+	/*
+		Expression Example:
+		=if(HouseName='Maison Rouge','#B62025',
+			if(HouseName='Blue Steel','#263A8E',
+			if(HouseName='The Wolf Pack','#FEB513',
+			if(HouseName='Villa Virdis','#3F6531',))))
+
+		Still need to work out how to only have it on Dimension two...		
+	*/
+
 	const measures = {
-		uses: "measures",
-		min: 0,
-		max: 4,
+		uses: 'measures',
+		min: 1,
+		max: 2,
 	};
 	const sorting = {
-		uses: "sorting"
+		uses: 'sorting',
 	};
 
+	/**
+	 * Only Set for percentage, has to be between 0 and 1
+	 */
+	const targetProps = {
+		label: 'Target',
+		type: 'items',
+		grouped: true,
+		items: {
+			groupA: {
+				type: 'items',
+				items: {
+					CheckProp: {
+						type: 'boolean',
+						label: 'Use Targets',
+						ref: 'props.target.show',
+						defaultValue: false,
+					},
+					StringProp: {
+						ref: 'props.target.a.title',
+						label: 'Target Name',
+						type: 'string',
+						defaultValue: 'Green',
+						show: function (e) {
+							if (e.props.target.show === true) {
+								return true;
+							}
+							return false;
+						},
+					},
+					targetRange: {
+						type: 'number',
+						label: 'Target > #',
+						ref: 'props.target.a.min',
+						defaultValue: '0.9',
+						show: function (e) {
+							if (e.props.target.show === true) {
+								return true;
+							}
+							return false;
+						},
+					},
+					colorProp: {
+						component: 'color-picker',
+						type: 'object',
+						ref: 'props.target.a.color',
+						defaultValue: { color: '#75cc40', index: '-1' },
+						show: function (e) {
+							if (e.props.target.show === true) {
+								return true;
+							}
+							return false;
+						},
+					},
+				},
+			},
+			groupB: {
+				type: 'items',
+				show: function (e) {
+					if (e.props.target.show === true) {
+						return true;
+					}
+					return false;
+				},
+				items: {
+					StringProp: {
+						ref: 'props.target.b.title',
+						label: 'Target Name',
+						type: 'string',
+						defaultValue: 'Amber',
+					},
+					targetRange: {
+						type: 'number',
+						label: 'Target > #',
+						ref: 'props.target.b.min',
+						defaultValue: '0.8',
+					},
+					colorProp: {
+						component: 'color-picker',
+						type: 'object',
+						ref: 'props.target.b.color',
+						defaultValue: { color: '#ffcb54', index: '-1' },
+					},
+				},
+			},
+			groupC: {
+				// Group C is always min Zero
+				type: 'items',
+				show: function (e) {
+					if (e.props.target.show === true) {
+						return true;
+					}
+					return false;
+				},
+				items: {
+					StringProp: {
+						ref: 'props.target.c.title',
+						label: 'Target Name',
+						type: 'string',
+						defaultValue: 'Red',
+					},
+					colorProp: {
+						component: 'color-picker',
+						type: 'object',
+						ref: 'props.target.c.color',
+						defaultValue: { color: '#ff5866', index: '-1' },
+					},
+				},
+			},
+			groupStroke: {
+				type: 'items',
+				show: function (e) {
+					if (e.props.target.show === true) {
+						return true;
+					}
+					return false;
+				},
+				items: {
+					strokeWidth: {
+						ref: 'props.target.stroke.width',
+						label: 'Stroke Properties',
+						type: 'number',
+						component: 'slider',
+						min: 0.1,
+						max: 3,
+						step: 0.2,
+						defaultValue: 1,
+					},
+					colorProp: {
+						component: 'color-picker',
+						type: 'object',
+						ref: 'props.target.stroke.color',
+						defaultValue: { color: '#ffffff', index: '-1' },
+					},
+				},
+			},
+		},
+	};
 
 	// Appearance section
-	// const appearanceSection = {
-	// 	uses: "settings",
-	// 	items: {
-	// 		propIcon: propIcon	
-	// 	}
-	// };
-
-
+	const appearanceSection = {
+		uses: 'settings',
+		items: { targetProps: targetProps },
+	};
 
 	// *****************************************************************************
 	// Further sections
@@ -61,53 +214,53 @@ define( [], function () {
 	// }
 
 	const aboutText = {
-		label: "About",
-		type: "items",
+		label: 'About',
+		type: 'items',
 		items: {
 			chartText: {
-				label: "Sense Target Chart v1.0.0",
-				component: "text",
-				type: "string"
+				label: 'Sense Target Chart v1.0.0',
+				component: 'text',
+				type: 'string',
 			},
 			authorText: {
-				label: "Richard Pearce",
-				component: "text",
-				type: "string"
+				label: 'Richard Pearce',
+				component: 'text',
+				type: 'string',
 			},
-			debug :{
-				label: "Debug",
-				ref:"props.debug",
-				component:"switch",
-				type: "boolean",
-				defaultValue: true,
-				options: [{
-					value: true,
-					label: "Debug"
-				},{
-					value: false,
-					label: "No Logging"
-				}]
-			}
-		}
-	}
+			debug: {
+				label: 'Debug',
+				ref: 'props.debug',
+				component: 'switch',
+				type: 'boolean',
+				defaultValue: false,
+				options: [
+					{
+						value: true,
+						label: 'Debug',
+					},
+					{
+						value: false,
+						label: 'No Logging',
+					},
+				],
+			},
+		},
+	};
 
-	
 	// *****************************************************************************
 	// Main properties panel definition
 	// Only what is defined here is returned from properties.js
 	// *****************************************************************************
 	return {
-		type: "items",
-		component: "accordion",
+		type: 'items',
+		component: 'accordion',
 		items: {
 			dimensions: dimensions,
 			measures: measures,
-			//KPIMessage: KPIMessage,
 			sorting: sorting,
-			//appearanceSection: appearanceSection,
-			aboutText: aboutText
+			appearanceSection: appearanceSection,
+			aboutText: aboutText,
 			//helpText: helpText
-		}
+		},
 	};
 });
-
