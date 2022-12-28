@@ -195,9 +195,10 @@ define([
 								layout.qHyperCube.qMeasureInfo.length === 2
 									? layout.qHyperCube.qMeasureInfo[1].qFallbackTitle
 									: '', // Second Expression Label
+							colorField: 'i1a0',
 						});
 
-						// Arks
+						// Arcs
 					}
 
 					// Update from Props. Hide / Show / Format
@@ -206,16 +207,16 @@ define([
 
 					console.log('layout ', layout);
 
-					if (!layout.props.debug) {
+					if (layout.props.debug) {
 						console.log('Custom Props: ', layout.props);
 					}
 					if (layout.props.debug) {
 						console.log('scope chart props: ', scope.chartprops);
 					}
-					if (!layout.props.debug) {
+					if (layout.props.debug) {
 						console.log('layout HC: ', layout.qHyperCube);
 					}
-					if (!layout.props.debug) {
+					if (layout.props.debug) {
 						console.log('scope data: ', scope.data);
 					}
 				};

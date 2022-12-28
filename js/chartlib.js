@@ -141,14 +141,13 @@ define(['./d3.min'], function (d3) {
 			groupSumField,
 			groupSumTitle,
 			groupSegments = 'Equal', // Not used currently
+			colorField,
 		}
 	) {
-		console.log('>>> Calculate Group', groupSumField);
-
 		let groupArray = d3.map(data, (d) => {
 			return d[index];
 		});
-		let uniqueGroup = _.uniq(groupArray).sort();
+		let uniqueGroup = _.uniq(groupArray).sort(); // Load distinct
 
 		let arr = [];
 
@@ -158,6 +157,8 @@ define(['./d3.min'], function (d3) {
 			let filteredData = 0;
 			let title = '';
 
+			// Future feature remove hard coded i3. Not isnull
+			// Also allow to use many sum by fields.
 			if (groupSumField === 'i3') {
 				filteredData = d3.map(
 					_.filter(data, [index, group]),
@@ -171,12 +172,12 @@ define(['./d3.min'], function (d3) {
 					d3.max(filteredData);
 			}
 
-			// let segmentFill =
-			// 	data[
-			// 		_.findIndex(data, function (o) {
-			// 			return o[index] == group;
-			// 		})
-			// 	][fillColorField];
+			let segmentFill =
+				data[
+					_.findIndex(data, function (o) {
+						return o[index] == group;
+					})
+				][colorField];
 
 			if (groupSegments === 'Equal') {
 				//"Equal", "Frequency"
@@ -185,7 +186,7 @@ define(['./d3.min'], function (d3) {
 				size = filteredData.length / data.length;
 			}
 
-			let obj = { group, title, size };
+			let obj = { group, title, size, segmentFill };
 			arr.push(obj);
 		}
 		return arr;

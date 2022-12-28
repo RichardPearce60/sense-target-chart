@@ -34,11 +34,20 @@ define([], function () {
 	'use strict';
 
 	/**
-	 * Converts Qlik layout Hypercube to O (original) dataset
+	 * DATA O
+	 *
+	 * Converts Qlik layout Hypercube to O (original) dataset,
+	 * Field Names are i0, i1, i2 etc Dimensions first then Measures
+	 *
+	 * Custom field Attributes are named i0a0, i0a1, i1a0, etc
+	 *
+	 * The field name is used as an accessor for other data map functions
+	 *
 	 * @param {*} layout - Qlik Sense Layout Object
 	 * @returns {array} Array - Array of all the data matrix index and values
 	 */
 	function dataMapO(layout) {
+		console.log('>> O');
 		let retVal = [],
 			fieldVal = {};
 		layout.qHyperCube.qDataPages[0].qMatrix.forEach((row, i) => {
@@ -48,7 +57,22 @@ define([], function () {
 				if (fieldValue == 'NaN') {
 					fieldValue = field.qText;
 				}
+				// Concat the new info to fieldVal
 				fieldVal = Object.assign(fieldVal, { [fieldname]: fieldValue });
+
+				if (field.qAttrExps) {
+					// Look for any additional attr fields
+					field.qAttrExps.qValues.forEach((attr, i) => {
+						let attrName = fieldname + 'a' + i;
+						let fieldValue = attr.qNum;
+						if (fieldValue == 'NaN') {
+							fieldValue = attr.qText;
+						}
+
+						// Concat the new info to fieldVal
+						fieldVal = Object.assign(fieldVal, { [attrName]: fieldValue });
+					});
+				}
 			});
 			retVal.push(fieldVal);
 			fieldVal = {};
@@ -57,6 +81,8 @@ define([], function () {
 	}
 
 	/**
+	 * DATA I
+	 *
 	 * Determines which index's have values
 	 * @param {array} names N or X array
 	 * @param {array} values V array
@@ -67,9 +93,11 @@ define([], function () {
 	}
 
 	/**
+	 * DATAMAP_
+	 *
 	 * Map data to new array using accessor (a)
 	 * @param {*} data (data.o)
-	 * @param {*} accessor ie d => d.[0]
+	 * @param {*} accessor ie (d) => d.i1
 	 * @returns {array}
 	 */
 	function dataMap_(data, a) {

@@ -10,10 +10,10 @@ define([], function () {
 		max: 2,
 		type: 'items',
 		items: {
-			MySliderProp: {
+			colorAttr: {
 				type: 'string',
 				component: 'expression',
-				label: 'Dimension Colors',
+				label: 'Attr Color',
 				ref: 'qAttributeExpressions.0.qExpression', // This places the data: qDataPages[0].qMatrix.[0][1].qAttrExps.qValues[0].qText
 				expression: 'optional',
 			},
