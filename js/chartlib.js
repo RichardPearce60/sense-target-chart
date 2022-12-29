@@ -39,17 +39,16 @@ define(['./d3.min'], function (d3) {
 	 *
 	 * @returns {Array} returns array for use with d3 to draw the three target circles
 	 */
-	function targetDataMap(layout, scope) {
+	function targetDataMap(
+		layout,
+		scope,
+		{ defaultFill, defaultStroke, defaultStrokeWidth }
+	) {
 		const T_Show = layout.props.target.show,
 			TA_Max = 1,
 			TA_Min = layout.props.target.a.min,
 			TB_Min = layout.props.target.b.min,
 			TC_Min = 0,
-			CenterX = scope.mainDiv.svgDiv.width / 2,
-			CenterY = scope.mainDiv.svgDiv.height / 2,
-			ScaleType = d3.scaleLinear,
-			Domain = [0, 1],
-			Range = [0, scope.data.target.r],
 			TA_Color = layout.props.target.a.color.color,
 			TA_Title = layout.props.target.a.title,
 			TB_Color = layout.props.target.b.color.color,
@@ -59,40 +58,28 @@ define(['./d3.min'], function (d3) {
 			strokeColor = layout.props.target.stroke.color.color,
 			strokeWidth = layout.props.target.stroke.width;
 
-		console.log('>> targetDataMap', d3);
 		let retVal = [];
 		const targetRange = [TC_Min, TB_Min, TA_Min, TA_Max];
-
-		const targetScale = ScaleType(Domain, Range);
-		//const targetScale = d3.scaleLinear().domain([0, 1]).range([0, 200]);
-
-		console.log({ targetScale });
 
 		// Error trap2 a,b,c must be larger than the previous when multiple targets are used
 		if (T_Show && TA_Min > TB_Min && TB_Min > TC_Min) {
 			retVal = [
 				{
-					x: CenterX,
-					y: CenterY,
-					r: targetScale(TA_Max), // Max is always the full radius
+					r: TA_Max, // Max is always the full radius.. Move scale to render!!
 					f: TA_Color,
 					s: strokeColor,
 					sw: strokeWidth,
 					t: TA_Title,
 				},
 				{
-					x: CenterX,
-					y: CenterY,
-					r: targetScale(TA_Min),
+					r: TA_Min,
 					f: TB_Color,
 					s: strokeColor,
 					sw: strokeWidth,
 					t: TB_Title,
 				},
 				{
-					x: CenterX,
-					y: CenterY,
-					r: targetScale(TB_Min),
+					r: TB_Min,
 					f: TC_Color,
 					s: strokeColor,
 					sw: strokeWidth,
@@ -107,12 +94,10 @@ define(['./d3.min'], function (d3) {
 			// No Targets used
 			retVal = [
 				{
-					x: CenterX,
-					y: CenterY,
-					r: targetScale(TA_Max),
-					f: 'none',
-					s: 'none',
-					sw: 'none',
+					r: TA_Max,
+					f: defaultFill,
+					s: defaultStroke,
+					sw: defaultStrokeWidth,
 					t: 'none',
 				},
 			];
@@ -123,21 +108,25 @@ define(['./d3.min'], function (d3) {
 
 	/**
 	 *
-	 * @param {array} data O from Qlik
-	 * @param {*} param1
+	 * @param {...Array} [arrays] data table data.o
+	 * @param {string} [groupby] Group by field
+	 * @param {string} [groupSumField] ie 'i3', field to find Min and Max for title
+	 * @param {string} [groupSumTitle] ie '~qMeasureInfo[1].qFallbackTitle', field to prefix title
+	 * @param {string} [colorField] ie 'i1a1', field lookup color for segmentFill. Needs to be distinct per groupby
+
 	 * @returns {Array} Returns grouped data that can be used for the Pie Arcs
 	 * @example
 	 *
-	 * 0: {group: 'Blue Steel', title: 'LOS 28 - 476', size: 1}
-	 * 1: {group: 'Maison Rouge', title: 'LOS 24 - 752', size: 1}
-	 * 2: {group: 'The Wolf Pack', title: 'LOS 27 - 598', size: 1}
-	 * 3: {group: 'Villa Virdis', title: 'LOS 25 - 585', size: 1}
+	 * 0: {group: 'Blue Steel', title: 'LOS 28 - 476', size: 1, segmentFill: '#263A8E'}
+	 * 1: {group: 'Maison Rouge', title: 'LOS 24 - 752', size: 1, segmentFill: '#B62025'}
+	 * 2: {group: 'The Wolf Pack', title: 'LOS 27 - 598', size: 1, segmentFill: '#FEB513'}
+	 * 3: {group: 'Villa Virdis', title: 'LOS 25 - 585', size: 1, segmentFill: '#3F6531'}
 	 *
 	 */
 	function calculateGroupData(
 		data,
 		{
-			index, // Group by Field (would be i1 if two dimensions are used)
+			groupby, // Group by Field (would be i1 if two dimensions are used)
 			groupSumField,
 			groupSumTitle,
 			groupSegments = 'Equal', // Not used currently
@@ -145,7 +134,7 @@ define(['./d3.min'], function (d3) {
 		}
 	) {
 		let groupArray = d3.map(data, (d) => {
-			return d[index];
+			return d[groupby];
 		});
 		let uniqueGroup = _.uniq(groupArray).sort(); // Load distinct
 
@@ -161,7 +150,7 @@ define(['./d3.min'], function (d3) {
 			// Also allow to use many sum by fields.
 			if (groupSumField === 'i3') {
 				filteredData = d3.map(
-					_.filter(data, [index, group]),
+					_.filter(data, [groupby, group]),
 					(r) => r[groupSumField]
 				);
 				title =
@@ -175,7 +164,7 @@ define(['./d3.min'], function (d3) {
 			let segmentFill =
 				data[
 					_.findIndex(data, function (o) {
-						return o[index] == group;
+						return o[groupby] == group;
 					})
 				][colorField];
 

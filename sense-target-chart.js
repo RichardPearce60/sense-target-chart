@@ -107,6 +107,10 @@ define([
 						.attr('class', 'performance')
 						.style('position', 'relative');
 
+					// Set up variables
+					scope.data = [];
+					scope.data.target = {};
+
 					scope.init($element, layout);
 				};
 
@@ -125,6 +129,9 @@ define([
 						scope.mainDiv.width,
 						scope.mainDiv.height
 					);
+
+					scope.data.target.ir = 0; // Inner Radius
+					scope.data.target.r = scope.mainDiv.svgDiv.width / 2;
 
 					scope.mainDiv.mainLegend.width =
 						scope.mainDiv.width - scope.mainDiv.svgDiv.width; //<< Use a min to refactor the target
@@ -146,7 +153,7 @@ define([
 						.style('top', scope.mainDiv.mainLegend.top + 'px')
 						.style('left', scope.mainDiv.mainLegend.left + 'px');
 
-					if (!layout.props.debug) {
+					if (layout.props.debug) {
 						console.log('scope main div: ', scope.mainDiv);
 					}
 				};
@@ -156,39 +163,64 @@ define([
 						console.log('Scope GET DATA <<<<<<<<<');
 					}
 
+					console.log('layout ', layout);
+
+					// Come back to these as I do the arks
+
+					scope.data.label = sensejslib.dataMapNames(layout);
+					scope.data.o = sensejslib.dataMapO(layout);
+
 					// scope chart props
 					scope.chartprops = [];
 
 					// Set the accessors
 					// This is dependent on how many dimensions / measures you have.
 					/*
-						1 Dim (x): Index / Name
-						2 Dim (z): Group by 
-						1 Exp (y): Score
-						2 Exp (v): Angle
+						1 Dim (x) 0: Index / Name
+						2 Dim (z) 1: Group by 
+						1 Exp (y) 2: Score
+						2 Exp (v) 3: Angle
 
 					*/
-					scope.chartprops.x = (d) => d.i0;
-					scope.chartprops.y = (d) => d.i1;
-					// Come back to these as I do the arks
 
-					scope.data = [];
-					scope.data.names = sensejslib.dataMapNames(layout);
-					scope.data.o = sensejslib.dataMapO(layout);
+					scope.chartprops.x = (d) => d.i0; // Index / Names
 					scope.data.x = sensejslib.dataMap_(scope.data.o, scope.chartprops.x);
+
+					if (layout.qHyperCube.qDimensionInfo.length === 1) {
+						scope.chartprops.y = (d) => d.i1; // Scores
+					} else if (layout.qHyperCube.qDimensionInfo.length === 2) {
+						scope.chartprops.z = (d) => d.i1; // Group By
+						scope.chartprops.y = (d) => d.i2; // Scores
+						scope.data.z = sensejslib.dataMap_(
+							scope.data.o,
+							scope.chartprops.z
+						);
+					}
+
 					scope.data.y = sensejslib.dataMap_(scope.data.o, scope.chartprops.y);
-					scope.data.i = sensejslib.dataMapI(scope.data.x, scope.data.y);
 
-					scope.data.g1 = sensejslib.dataGroupBy(scope.data.o, 'i0', 'i1');
+					if (layout.qHyperCube.qMeasureInfo.length === 2) {
+						scope.chartprops.a = (d) => d.i3; // Angle
+						scope.data.a = sensejslib.dataMap_(
+							scope.data.o,
+							scope.chartprops.a
+						);
+					}
 
-					scope.data.target = {};
-					scope.data.target.r = scope.mainDiv.svgDiv.width / 2;
-					scope.data.target = chartlib.targetDataMap(layout, scope);
+					//scope.data.i = sensejslib.dataMapI(scope.data.x, scope.data.y);
+					//scope.data.g1 = sensejslib.dataGroupBy(scope.data.o, 'i0', 'i1');
+
+					scope.data.target.o = chartlib.targetDataMap(layout, scope, {
+						defaultFill: '#f7f7f7',
+						defaultStroke: '#000',
+						defaultStrokeWidth: 0.7,
+					});
 
 					// Set the group data for the pie arks, only if there is a second dimension
 					if (layout.qHyperCube.qDimensionInfo.length === 2) {
-						scope.data.group = chartlib.calculateGroupData(scope.data.o, {
-							index: 'i1', // Second Dimension
+						scope.data.group = {};
+						scope.data.group.o = chartlib.calculateGroupData(scope.data.o, {
+							groupby: 'i1', // Second Dimension
 							groupSumField:
 								layout.qHyperCube.qMeasureInfo.length === 2 ? 'i3' : '', // Second Expression
 							groupSumTitle:
@@ -198,14 +230,27 @@ define([
 							colorField: 'i1a0',
 						});
 
-						// Arcs
+						// Generate Arcs / Pie Chart Information.
+						scope.data.group.arcV = d3.map(scope.data.group.o, (r) => r.size);
+						scope.data.group.arcI = d3
+							.range(scope.data.group.arcV.length)
+							.filter((i) => !isNaN(scope.data.group.arcV[i]));
+						scope.data.group.arc = d3
+							.arc()
+							.innerRadius(scope.data.target.ir)
+							.outerRadius(scope.data.target.r);
+						scope.data.group.arcs = d3
+							.pie()
+							.startAngle((-90 * Math.PI) / 180)
+							.endAngle((-90 * Math.PI) / 180 + 2 * Math.PI)
+							.padAngle(0)
+							.sort(null)
+							.value((i) => scope.data.group.arcV[i])(scope.data.group.arcI);
 					}
 
 					// Update from Props. Hide / Show / Format
 					scope.mainDiv.svgDiv.classed('center', false); // Take true and false from show legend, also prop to center main svg
 					scope.mainDiv.mainLegend.classed('hide', false);
-
-					console.log('layout ', layout);
 
 					if (layout.props.debug) {
 						console.log('Custom Props: ', layout.props);
@@ -225,10 +270,56 @@ define([
 					if (layout.props.debug) {
 						console.log('Scope RENDER <<<<<<<<<');
 					}
+					console.log(scope.data.target);
+
+					drawTargets(scope.data.target.o, {
+						x: scope.mainDiv.svgDiv.width / 2,
+						y: scope.mainDiv.svgDiv.height / 2,
+					});
+
+					function drawTargets(
+						data,
+						{
+							x,
+							y,
+							ScaleType = d3.scaleLinear,
+							Domain = [0, 1],
+							Range = [0, scope.data.target.r],
+						}
+					) {
+						const targetScale = ScaleType(Domain, Range);
+
+						let targetAreas = scope.mainDiv.svgDiv.svg
+							.selectAll('circle')
+							.data(data, function (d) {
+								return d;
+							})
+							.join(
+								(enter) => {
+									let entered = enter
+										.append('circle')
+										.attr('cx', x)
+										.attr('cy', y)
+										.attr('r', (d) => targetScale(d.r))
+										.attr('fill', (d) => d.f)
+										.attr('stroke', (d) => d.s)
+										.attr('stroke-width', (d) => d.sw);
+								},
+								(update) => {
+									let updated = update
+										.attr('cx', x)
+										.attr('cy', y)
+										.attr('r', (d) => targetScale(d.r))
+										.attr('fill', (d) => d.f)
+										.attr('stroke', (d) => d.s)
+										.attr('stroke-width', (d) => d.sw);
+								}
+							);
+					}
 				};
 				console.log('## Extension Run ##');
 				scope.prep(scope, $element, scope.layout);
-				scope.getData(scope, scope.layout);
+				scope.getData(scope, scope.layout, d3);
 				scope.render(scope.element, scope.layout);
 
 				scope.backendApi.model.Validated.bind(function () {
@@ -238,7 +329,7 @@ define([
 					}
 
 					try {
-						scope.getData(scope, scope.layout);
+						scope.getData(scope, scope.layout, d3);
 						scope.render(scope.element, scope.layout);
 					} catch (err) {
 						console.log(err);

@@ -7,6 +7,8 @@
         find
         convert
 
+	Example:
+
     /##
        * This method is like `_.union` except that it accepts `comparator` which
        * is invoked to compare elements of `arrays`. Result values are chosen from
@@ -43,11 +45,10 @@ define([], function () {
 	 *
 	 * The field name is used as an accessor for other data map functions
 	 *
-	 * @param {*} layout - Qlik Sense Layout Object
+	 * @param {obj} layout - Qlik Sense Layout Object
 	 * @returns {array} Array - Array of all the data matrix index and values
 	 */
 	function dataMapO(layout) {
-		console.log('>> O');
 		let retVal = [],
 			fieldVal = {};
 		layout.qHyperCube.qDataPages[0].qMatrix.forEach((row, i) => {
@@ -126,6 +127,8 @@ define([], function () {
 	 * @param {string} gf Group by Field
 	 * @param {string} sf0 Sum Field 0
 	 * @returns {array} new array
+	 *
+	 * Change gf, sf_a to object {} (new major version)
 	 */
 
 	function dataGroupBy(data, gf, sf_a = {}) {
