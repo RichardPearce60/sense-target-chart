@@ -69,6 +69,12 @@ define([
 						.attr('width', '100%')
 						.attr('height', '100%');
 
+					// Will contain the Target Circles
+					scope.mainDiv.svgDiv.svg.tc = scope.mainDiv.svgDiv.svg.append('g');
+
+					// Will contain the Group Pie Arcs
+					scope.mainDiv.svgDiv.svg.arcs = scope.mainDiv.svgDiv.svg.append('g');
+
 					// Div holding the legend, one for Target (circles), one for performance (bar chart)
 					scope.mainDiv.mainLegend = scope.mainDiv
 						.append('div')
@@ -110,6 +116,22 @@ define([
 					// Set up variables
 					scope.data = [];
 					scope.data.target = {};
+					scope.data.group = {};
+
+					scope.data.group.colorScale = d3
+						.scaleOrdinal()
+						.range([
+							'#4e79a7',
+							'#f28e2c',
+							'#e15759',
+							'#76b7b2',
+							'#59a14f',
+							'#edc949',
+							'#af7aa1',
+							'#ff9da7',
+							'#9c755f',
+							'#bab0ab',
+						]);
 
 					scope.init($element, layout);
 				};
@@ -129,9 +151,6 @@ define([
 						scope.mainDiv.width,
 						scope.mainDiv.height
 					);
-
-					scope.data.target.ir = 0; // Inner Radius
-					scope.data.target.r = scope.mainDiv.svgDiv.width / 2;
 
 					scope.mainDiv.mainLegend.width =
 						scope.mainDiv.width - scope.mainDiv.svgDiv.width; //<< Use a min to refactor the target
@@ -153,9 +172,37 @@ define([
 						.style('top', scope.mainDiv.mainLegend.top + 'px')
 						.style('left', scope.mainDiv.mainLegend.left + 'px');
 
+					scope.targetInit(layout, scope);
+
 					if (layout.props.debug) {
 						console.log('scope main div: ', scope.mainDiv);
 					}
+				};
+
+				scope.targetInit = function (layout, scope) {
+					if (layout.props.debug) {
+						console.log('Scope Target Init <<<<<<<<<');
+						// Separated out as Layout and Data can both change attributes
+					}
+
+					scope.data.target.r =
+						scope.mainDiv.svgDiv.width / 2 - layout.props.group.stroke.width;
+
+					scope.data.group.arc = d3
+						.arc()
+						.innerRadius(scope.data.target.r * layout.props.group.innerRadius)
+						.outerRadius(scope.data.target.r);
+
+					scope.mainDiv.svgDiv.svg.arcs
+						.attr(
+							'transform',
+							`translate(${scope.mainDiv.svgDiv.width / 2},
+									   ${scope.mainDiv.svgDiv.height / 2})`
+						)
+						.attr('stroke', layout.props.group.stroke.color.color)
+						.attr('stroke-width', layout.props.group.stroke.width)
+						.attr('stroke-linejoin', 'round')
+						.style('opacity', layout.props.group.opacity);
 				};
 
 				scope.getData = function (scope, layout, d3) {
@@ -207,18 +254,17 @@ define([
 						);
 					}
 
-					//scope.data.i = sensejslib.dataMapI(scope.data.x, scope.data.y);
-					//scope.data.g1 = sensejslib.dataGroupBy(scope.data.o, 'i0', 'i1');
-
-					scope.data.target.o = chartlib.targetDataMap(layout, scope, {
+					scope.data.target.o = chartlib.targetDataMap(layout, {
 						defaultFill: '#f7f7f7',
 						defaultStroke: '#000',
 						defaultStrokeWidth: 0.7,
 					});
 
+					// Group Data requires z distinct
+					scope.data.group.colorScale.domain(_.sortedUniq(scope.data.z));
+
 					// Set the group data for the pie arks, only if there is a second dimension
 					if (layout.qHyperCube.qDimensionInfo.length === 2) {
-						scope.data.group = {};
 						scope.data.group.o = chartlib.calculateGroupData(scope.data.o, {
 							groupby: 'i1', // Second Dimension
 							groupSumField:
@@ -235,10 +281,7 @@ define([
 						scope.data.group.arcI = d3
 							.range(scope.data.group.arcV.length)
 							.filter((i) => !isNaN(scope.data.group.arcV[i]));
-						scope.data.group.arc = d3
-							.arc()
-							.innerRadius(scope.data.target.ir)
-							.outerRadius(scope.data.target.r);
+
 						scope.data.group.arcs = d3
 							.pie()
 							.startAngle((-90 * Math.PI) / 180)
@@ -247,6 +290,8 @@ define([
 							.sort(null)
 							.value((i) => scope.data.group.arcV[i])(scope.data.group.arcI);
 					}
+
+					scope.targetInit(layout, scope);
 
 					// Update from Props. Hide / Show / Format
 					scope.mainDiv.svgDiv.classed('center', false); // Take true and false from show legend, also prop to center main svg
@@ -270,51 +315,22 @@ define([
 					if (layout.props.debug) {
 						console.log('Scope RENDER <<<<<<<<<');
 					}
-					console.log(scope.data.target);
 
-					drawTargets(scope.data.target.o, {
+					// Target Circles
+					chartlib.drawTargets(scope.data.target.o, {
+						svg: scope.mainDiv.svgDiv.svg.tc,
 						x: scope.mainDiv.svgDiv.width / 2,
 						y: scope.mainDiv.svgDiv.height / 2,
+						Range: [0, scope.data.target.r],
 					});
 
-					function drawTargets(
-						data,
-						{
-							x,
-							y,
-							ScaleType = d3.scaleLinear,
-							Domain = [0, 1],
-							Range = [0, scope.data.target.r],
-						}
-					) {
-						const targetScale = ScaleType(Domain, Range);
-
-						let targetAreas = scope.mainDiv.svgDiv.svg
-							.selectAll('circle')
-							.data(data, function (d) {
-								return d;
-							})
-							.join(
-								(enter) => {
-									let entered = enter
-										.append('circle')
-										.attr('cx', x)
-										.attr('cy', y)
-										.attr('r', (d) => targetScale(d.r))
-										.attr('fill', (d) => d.f)
-										.attr('stroke', (d) => d.s)
-										.attr('stroke-width', (d) => d.sw);
-								},
-								(update) => {
-									let updated = update
-										.attr('cx', x)
-										.attr('cy', y)
-										.attr('r', (d) => targetScale(d.r))
-										.attr('fill', (d) => d.f)
-										.attr('stroke', (d) => d.s)
-										.attr('stroke-width', (d) => d.sw);
-								}
-							);
+					// Pie arcs if required
+					if (layout.qHyperCube.qDimensionInfo.length === 2) {
+						chartlib.drawGroupArcs(scope.data.group.arcs, scope.data.group.o, {
+							svg: scope.mainDiv.svgDiv.svg.arcs,
+							arc: scope.data.group.arc,
+							defaultColorScale: scope.data.group.colorScale,
+						});
 					}
 				};
 				console.log('## Extension Run ##');

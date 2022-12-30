@@ -36,7 +36,7 @@ define([], function () {
 	'use strict';
 
 	/**
-	 * DATA O
+	 * # dataMapO
 	 *
 	 * Converts Qlik layout Hypercube to O (original) dataset,
 	 * Field Names are i0, i1, i2 etc Dimensions first then Measures

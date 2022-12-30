@@ -29,25 +29,26 @@ define(['./d3.min'], function (d3) {
 	'use strict';
 
 	/**
+	 * # targetDataMap
+	 *
 	 * This method takes the custom properties target data and
-	 * creates an array for each target circle
+	 * creates an array for each targets circle
 	 *
 	 * The min values for each target has to be a percentage and there are always three bands
 	 * A = TA_Min to 1
 	 * B = TB_Min to TA_Min
 	 * C = 0 to TB_Min
-	 *
+	 * @param {obj} [layout] - Qlik Layout object for user props
 	 * @returns {Array} returns array for use with d3 to draw the three target circles
 	 */
 	function targetDataMap(
 		layout,
-		scope,
 		{ defaultFill, defaultStroke, defaultStrokeWidth }
 	) {
 		const T_Show = layout.props.target.show,
 			TA_Max = 1,
-			TA_Min = layout.props.target.a.min,
-			TB_Min = layout.props.target.b.min,
+			TA_Min = 1 - layout.props.target.a.min,
+			TB_Min = 1 - layout.props.target.b.min,
 			TC_Min = 0,
 			TA_Color = layout.props.target.a.color.color,
 			TA_Title = layout.props.target.a.title,
@@ -62,7 +63,15 @@ define(['./d3.min'], function (d3) {
 		const targetRange = [TC_Min, TB_Min, TA_Min, TA_Max];
 
 		// Error trap2 a,b,c must be larger than the previous when multiple targets are used
-		if (T_Show && TA_Min > TB_Min && TB_Min > TC_Min) {
+
+		// 0.09
+		// 0.199
+		// 0
+
+		if (
+			T_Show
+			//&& TA_Min < TB_Min && TB_Min > TC_Min
+		) {
 			retVal = [
 				{
 					r: TA_Max, // Max is always the full radius.. Move scale to render!!
@@ -86,9 +95,10 @@ define(['./d3.min'], function (d3) {
 					t: TC_Title,
 				},
 			];
-		} else if ((T_Show && TA_Min < TB_Min) || (T_Show && TB_Min < TC_Min)) {
+		} else if ((T_Show && TA_Min > TB_Min) || (T_Show && TB_Min < TC_Min)) {
 			console.log('error a<b or b<c', TA_Min, TB_Min, TC_Min);
 			// !!!!! >>>> Future we need to log the message in the main div on render
+
 			return [];
 		} else if (!T_Show) {
 			// No Targets used
@@ -107,7 +117,12 @@ define(['./d3.min'], function (d3) {
 	}
 
 	/**
-	 *
+	 * # CalculateGroupData
+	 * 
+	 * Used specifically for the Target pie charts, takes data.o and groups
+	 * Additionally add color from field attributes
+	 * Can generates size from frequency but is defaulted to equal groups
+	 * 
 	 * @param {...Array} [arrays] data table data.o
 	 * @param {string} [groupby] Group by field
 	 * @param {string} [groupSumField] ie 'i3', field to find Min and Max for title
@@ -168,6 +183,8 @@ define(['./d3.min'], function (d3) {
 					})
 				][colorField];
 
+			// if segment fill is empty then apply some color scales!
+
 			if (groupSegments === 'Equal') {
 				//"Equal", "Frequency"
 				size = 1;
@@ -175,11 +192,104 @@ define(['./d3.min'], function (d3) {
 				size = filteredData.length / data.length;
 			}
 
-			let obj = { group, title, size, segmentFill };
+			let obj = { group, title, size, fill: segmentFill };
 			arr.push(obj);
 		}
 		return arr;
 	}
 
-	return { targetDataMap, calculateGroupData };
+	/**
+	 * # Calculate Mark Data
+	 */
+	function calculateMarkData() {}
+
+	/**
+	 * # drawTargets
+	 *
+	 * Draws an svg circle for each target specified in the properties
+	 *
+	 * @param {arr} [data] - uses scope.data.target.o generated in  chartlib.targetDataMap
+	 * @param {*} [svg] - Target SVG to append new svg objects
+	 * @param {int} [x] - cx main svg width / 2
+	 * @param {int} [y] - cy main svg height / 2
+	 */
+	function drawTargets(
+		data,
+		{ svg, x, y, ScaleType = d3.scaleLinear, Domain = [0, 1], Range }
+	) {
+		const targetScale = ScaleType(Domain, Range);
+
+		svg
+			.selectAll('circle')
+			.data(data, function (d) {
+				return d;
+			})
+			.join(
+				(enter) => {
+					let entered = enter
+						.append('circle')
+						.attr('cx', x)
+						.attr('cy', y)
+						.attr('r', (d) => targetScale(d.r))
+						.attr('fill', (d) => d.f)
+						.attr('stroke', (d) => d.s)
+						.attr('stroke-width', (d) => d.sw);
+				},
+				(update) => {
+					let updated = update
+						.attr('cx', x)
+						.attr('cy', y)
+						.attr('r', (d) => targetScale(d.r))
+						.attr('fill', (d) => d.f)
+						.attr('stroke', (d) => d.s)
+						.attr('stroke-width', (d) => d.sw);
+				}
+			);
+	}
+
+	/**
+	 * # drawGroupArcs
+	 *
+	 * Draws pie chart arcs
+	 *
+	 * @param {*} data - uses ard data scope.data.group.arcs
+	 * @param {*} groupData - data about the groups ie fill scope.data.group.o
+	 * @param {*} svg - Target SVG to append new svg objects
+	 * @param {*} arc - d3.arc function
+	 */
+	function drawGroupArcs(data, groupData, { svg, arc, defaultColorScale }) {
+		const pieArcs = svg
+			.selectAll('path')
+			.data(data, function (d) {
+				return d.index;
+			})
+			.join(
+				(enter) => {
+					let entered = enter
+						.append('path')
+						.attr('fill', (d) => {
+							if (!groupData[d.index].fill) {
+								return defaultColorScale(groupData[d.index].group);
+							}
+							return groupData[d.index].fill;
+						})
+						.attr('d', arc);
+				},
+				(update) => {
+					let updated = update
+						//.select('path')
+						.attr('fill', (d) => {
+							if (!groupData[d.index].fill) {
+								return defaultColorScale(groupData[d.index].group);
+							}
+							return groupData[d.index].fill;
+						})
+						.attr('d', arc);
+				}
+			);
+	}
+
+	// Standard prep, init, getData functions
+
+	return { targetDataMap, calculateGroupData, drawTargets, drawGroupArcs };
 });

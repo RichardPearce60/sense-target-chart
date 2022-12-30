@@ -38,6 +38,60 @@ define([], function () {
 		uses: 'sorting',
 	};
 
+	const groupProps = {
+		label: 'Group',
+		type: 'items',
+		grouped: true,
+		items: {
+			groupA: {
+				type: 'items',
+				items: {
+					StringProp: {
+						label: 'Groups are only available with a second dimension',
+						component: 'text',
+					},
+					opacityProp: {
+						label: 'Opacity',
+						ref: 'props.group.opacity',
+						component: 'slider',
+						type: 'number',
+						min: 0,
+						max: 1,
+						step: 0.05,
+						defaultValue: 0.5,
+					},
+					innerRadiusProp: {
+						label: 'Inner Radius',
+						ref: 'props.group.innerRadius',
+						component: 'slider',
+						type: 'number',
+						min: 0,
+						max: 1,
+						step: 0.05,
+						defaultValue: 0,
+					},
+					strokeWidthProp: {
+						label: 'Stroke Width',
+						ref: 'props.group.stroke.width',
+						component: 'slider',
+						type: 'number',
+						min: 0,
+						max: 3,
+						step: 0.1,
+						defaultValue: 1,
+					},
+					strokeColorProp: {
+						label: 'Stroke Color',
+						component: 'color-picker',
+						type: 'object',
+						ref: 'props.group.stroke.color',
+						defaultValue: { color: '#ff5866', index: '-1' },
+					},
+				},
+			},
+		},
+	};
+
 	/**
 	 * Only Set for percentage, has to be between 0 and 1
 	 */
@@ -59,7 +113,7 @@ define([], function () {
 						ref: 'props.target.a.title',
 						label: 'Target Name',
 						type: 'string',
-						defaultValue: 'Green',
+						defaultValue: 'Red',
 						show: function (e) {
 							if (e.props.target.show === true) {
 								return true;
@@ -69,9 +123,9 @@ define([], function () {
 					},
 					targetRange: {
 						type: 'number',
-						label: 'Target > #',
+						label: '# < Target',
 						ref: 'props.target.a.min',
-						defaultValue: '0.9',
+						defaultValue: '0.5',
 						show: function (e) {
 							if (e.props.target.show === true) {
 								return true;
@@ -83,7 +137,7 @@ define([], function () {
 						component: 'color-picker',
 						type: 'object',
 						ref: 'props.target.a.color',
-						defaultValue: { color: '#75cc40', index: '-1' },
+						defaultValue: { color: '#ff5866', index: '-1' },
 						show: function (e) {
 							if (e.props.target.show === true) {
 								return true;
@@ -110,7 +164,7 @@ define([], function () {
 					},
 					targetRange: {
 						type: 'number',
-						label: 'Target > #',
+						label: '# < Target',
 						ref: 'props.target.b.min',
 						defaultValue: '0.8',
 					},
@@ -142,7 +196,7 @@ define([], function () {
 						component: 'color-picker',
 						type: 'object',
 						ref: 'props.target.c.color',
-						defaultValue: { color: '#ff5866', index: '-1' },
+						defaultValue: { color: '#75cc40', index: '-1' },
 					},
 				},
 			},
@@ -179,7 +233,7 @@ define([], function () {
 	// Appearance section
 	const appearanceSection = {
 		uses: 'settings',
-		items: { targetProps: targetProps },
+		items: { targetProps: targetProps, groupProps: groupProps },
 	};
 
 	// *****************************************************************************
