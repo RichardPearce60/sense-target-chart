@@ -38,6 +38,29 @@ define([], function () {
 		uses: 'sorting',
 	};
 
+	const markProps = {
+		label: 'Mark',
+		type: 'items',
+		grouped: true,
+		items: {
+			groupA: {
+				type: 'items',
+				items: {
+					scaleProp: {
+						label: 'Mark Size',
+						ref: 'props.mark.scale',
+						component: 'slider',
+						type: 'number',
+						min: 0.4,
+						max: 1.5,
+						step: 0.1,
+						defaultValue: 0.8,
+					},
+				},
+			},
+		},
+	};
+
 	const groupProps = {
 		label: 'Group',
 		type: 'items',
@@ -233,7 +256,11 @@ define([], function () {
 	// Appearance section
 	const appearanceSection = {
 		uses: 'settings',
-		items: { targetProps: targetProps, groupProps: groupProps },
+		items: {
+			targetProps: targetProps,
+			groupProps: groupProps,
+			markProps: markProps,
+		},
 	};
 
 	// *****************************************************************************

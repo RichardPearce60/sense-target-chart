@@ -203,6 +203,11 @@ define([
 						.attr('stroke-width', layout.props.group.stroke.width)
 						.attr('stroke-linejoin', 'round')
 						.style('opacity', layout.props.group.opacity);
+
+					scope.data.target.xScale = d3
+						.scaleLinear()
+						.domain([0, 1])
+						.range([0, scope.data.target.r]);
 				};
 
 				scope.getData = function (scope, layout, d3) {
@@ -260,7 +265,7 @@ define([
 						defaultStrokeWidth: 0.7,
 					});
 
-					// Group Data requires z distinct
+					// Used if no user color defined
 					scope.data.group.colorScale.domain(_.sortedUniq(scope.data.z));
 
 					// Set the group data for the pie arks, only if there is a second dimension
@@ -289,9 +294,37 @@ define([
 							.padAngle(0)
 							.sort(null)
 							.value((i) => scope.data.group.arcV[i])(scope.data.group.arcI);
+
+						// Add Group Information to Arcs, required by calculateMarkData
+						// Not really happy with this but I'm tired and its Friday...
+						for (let i = 0; i < scope.data.group.arcs.length; i++) {
+							scope.data.group.arcs[i] = Object.assign(
+								scope.data.group.arcs[i],
+								{
+									i1: scope.data.group.o[i].group,
+								}
+							);
+						}
 					}
 
+					// Initialize the Target with the new data
 					scope.targetInit(layout, scope);
+
+					// Calculate Marks......
+					scope.data.mark = {};
+					scope.data.mark.o = chartlib.calculateMarkData(
+						scope.data.o,
+						scope.data.group.arcs,
+						{
+							dataV: scope.data.y,
+							dataA: scope.data.a,
+							showGroups:
+								layout.qHyperCube.qDimensionInfo.length === 2 ? true : false,
+							sortTypeRandom:
+								layout.qHyperCube.qMeasureInfo.length !== 2 ? true : false,
+							markScale: layout.props.mark.scale,
+						}
+					);
 
 					// Update from Props. Hide / Show / Format
 					scope.mainDiv.svgDiv.classed('center', false); // Take true and false from show legend, also prop to center main svg
@@ -308,6 +341,7 @@ define([
 					}
 					if (layout.props.debug) {
 						console.log('scope data: ', scope.data);
+						console.table('scope data O: ', scope.data.o[0]);
 					}
 				};
 

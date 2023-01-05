@@ -200,8 +200,141 @@ define(['./d3.min'], function (d3) {
 
 	/**
 	 * # Calculate Mark Data
+	 *
+	 * Takes the main data.o and the defined d3.pie function
+	 * and creates all the data required to draw the marks
+	 *
+	 * @param {arr} [data] - uses scope.data.o
+	 * @param {} [arc] - d3.arc function
+	 * @param {arr} [dataV] - First measure values (v for values)
+	 * @param {arr} [dataA] - second measure values (a for angle)
+	 *
+	 * @param {string} [groupByField] - Used when group are present (same field)
+	 * @returns {array} [extentField] - Field extent is applied to in the groupBy (ie Length of Service)
+	 * @example
+	 *
+	 *
 	 */
-	function calculateMarkData() {}
+	function calculateMarkData(
+		data,
+		arcs,
+		{
+			firstMeasure = 'i2', // Ie score
+			groupByField = 'i1', // ie House Name
+			extentField = 'i3', // ie LOS
+			dataV,
+			dataA,
+			showGroups,
+			sortTypeRandom,
+			targetXScaleRange,
+			markColor = 'i0a0',
+			markPath = 'M-2,-2 L2,2 M-2,2 L2,-2',
+			markScale = 1,
+		}
+	) {
+		//
+
+		// Set up scales for the angles *******************************************
+		let arcScale = [],
+			domain = 0;
+
+		const radians_to_degrees = (radians) => {
+			var pi = Math.PI;
+			return radians * (180 / pi);
+		};
+
+		const getRandomInt = (max) => {
+			return Math.floor(Math.random() * max);
+		};
+
+		//  === 'Length of Service'
+		if (showGroups) {
+			// Generate a scale for each group
+			for (let i = 0; i < arcs.length; i++) {
+				let range = [
+					radians_to_degrees(arcs[i].startAngle),
+					radians_to_degrees(arcs[i].endAngle),
+				];
+
+				if (!sortTypeRandom) {
+					domain = d3.extent(
+						d3.map(
+							_.filter(data, [groupByField, arcs[i][groupByField]]),
+							(r) => r[extentField]
+						)
+					);
+				} else {
+					domain = d3.extent(dataV);
+				}
+
+				arcScale[i] = d3.scaleLinear().domain(domain).range(range);
+			}
+		} else if (!showGroups) {
+			// if we don't have segments then we just need the one scale...
+			if (!sortTypeRandom) {
+				arcScale[0] = d3.scaleLinear().domain(d3.extent(dataA)).range([0, 360]);
+			} else {
+				arcScale[0] = d3.scaleLinear().domain(d3.extent(dataV)).range([0, 360]);
+			}
+		}
+
+		// Calculate the Marks **********************************
+
+		let retVal = [];
+
+		for (let i = 0; i < data.length; i++) {
+			let id = i;
+			let score = data[i][firstMeasure];
+			let rotate = 0;
+
+			if (sortTypeRandom) {
+				rotate = arcScale[0](getRandomInt(359) + 1);
+			} else if (!sortTypeRandom) {
+				if (showGroups) {
+					rotate = arcScale[
+						_.findIndex(arcs, { [groupByField]: data[i][groupByField] }) // Using the group by field (same on both data and arcs) we find the index
+					](data[i][extentField]);
+				} else if (!showGroups) {
+					rotate = arcScale[0](data[i][extentField]);
+				}
+			}
+
+			rotate = rotate - 90; // Resolve the starting angle to 0
+
+			let inverseRotate = 0;
+			if (rotate > 0) {
+				inverseRotate = -Math.abs(rotate);
+			} else {
+				inverseRotate = Math.abs(rotate);
+			}
+
+			// MOVE THE SCALE TO THE RENDER !!!!!!!
+			//let x = scope.target.xScale(1 - data[i][firstMeasure]);
+			let x = 1 - data[i][firstMeasure];
+
+			let house_name = data[i][groupByField];
+
+			let stroke = '#000';
+			if (data[i][markColor]) {
+				stroke = data[i][markColor];
+			}
+
+			let obj = {
+				id,
+				score,
+				rotate,
+				inverseRotate,
+				x,
+				scale: markScale,
+				path: markPath,
+				house_name,
+				stroke,
+			};
+			retVal.push(obj);
+		}
+
+		return retVal;
+	}
 
 	/**
 	 * # drawTargets
@@ -291,5 +424,11 @@ define(['./d3.min'], function (d3) {
 
 	// Standard prep, init, getData functions
 
-	return { targetDataMap, calculateGroupData, drawTargets, drawGroupArcs };
+	return {
+		targetDataMap,
+		calculateGroupData,
+		calculateMarkData,
+		drawTargets,
+		drawGroupArcs,
+	};
 });
