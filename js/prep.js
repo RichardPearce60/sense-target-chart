@@ -41,6 +41,9 @@ define(['./d3.min'], function (d3) {
 		// Will contain the Group Pie Arcs
 		scope.mainDiv.svgDiv.svg.arcs = scope.mainDiv.svgDiv.svg.append('g');
 
+		// Will contain the marks
+		scope.mainDiv.svgDiv.svg.marks = scope.mainDiv.svgDiv.svg.append('g');
+
 		// Div holding the legend split into two divs, one for Target (circles) legend and one for performance (bar chart)
 		scope.mainDiv.mainLegend = scope.mainDiv
 			.append('div')

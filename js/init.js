@@ -71,6 +71,12 @@ define(['./d3.min'], function (d3) {
 			.attr('stroke-linejoin', 'round')
 			.style('opacity', layout.props.group.opacity);
 
+		scope.mainDiv.svgDiv.svg.marks.attr(
+			'transform',
+			`translate(${scope.mainDiv.svgDiv.width / 2},
+                           ${scope.mainDiv.svgDiv.height / 2})`
+		);
+
 		scope.data.target.xScale = d3
 			.scaleLinear()
 			.domain([0, 1])

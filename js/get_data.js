@@ -1,5 +1,5 @@
 /* 
-    Sense Chart - Init 
+    Sense Chart - Get_Data 
     JSDocs standard for notation
 */
 

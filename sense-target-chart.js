@@ -7,7 +7,8 @@ define([
 	'./js/prep',
 	'./js/init',
 	'./js/get_data',
-], function (props, d3, _, sensejslib, chartlib, prep, init, data) {
+	'./js/render',
+], function (props, d3, _, sensejslib, chartlib, prep, init, data, render) {
 	'use strict';
 
 	return {
@@ -106,6 +107,8 @@ define([
 						console.log('layout HC: ', layout.qHyperCube);
 						console.log('scope data: ', scope.data);
 						console.table('scope data O: ', scope.data.o[0]);
+						console.log('marks o', scope.data.mark.o);
+						console.log('marks o', scope.data.mark.o[0]);
 					}
 				};
 
@@ -115,7 +118,7 @@ define([
 					}
 
 					// Target Circles
-					chartlib.drawTargets(scope.data.target.o, {
+					render.drawTargets(scope.data.target.o, {
 						svg: scope.mainDiv.svgDiv.svg.tc,
 						x: scope.mainDiv.svgDiv.width / 2,
 						y: scope.mainDiv.svgDiv.height / 2,
@@ -124,11 +127,74 @@ define([
 
 					// Pie arcs if required
 					if (layout.qHyperCube.qDimensionInfo.length === 2) {
-						chartlib.drawGroupArcs(scope.data.group.arcs, scope.data.group.o, {
+						render.drawGroupArcs(scope.data.group.arcs, scope.data.group.o, {
 							svg: scope.mainDiv.svgDiv.svg.arcs,
 							arc: scope.data.group.arc,
 							defaultColorScale: scope.data.group.colorScale,
 						});
+					}
+
+					// Draw Marks
+					drawMarks(scope.data.mark.o, {
+						svg: scope.mainDiv.svgDiv.svg.marks,
+						xScale: scope.data.target.xScale,
+					});
+
+					function drawMarks(data, { svg, xScale }) {
+						const marks = svg
+							.selectAll('g')
+							.data(data, function (d) {
+								return d.id;
+							})
+							.join(
+								(enter) => {
+									// check a d3 example on how to label and select each object within the group
+
+									let entered = enter
+										.append('g')
+										.attr('data-value', (d) => d.id); // Possibly ID for pop up!
+
+									let markRotate = entered
+										.attr('transform', (d) => {
+											return `rotate(${d.rotate})`;
+										})
+
+										.append('g');
+
+									let markGroup = entered.attr('transform', (d) => {
+										return `translate(${xScale(d.x)},${0}) rotate(${
+											d.inverseRotate
+										}) scale(${d.scale}) `;
+									});
+
+									let enteredMark = markGroup
+										.append('path')
+										.attr('d', (d) => d.path)
+										.style('stroke', (d) => {
+											return d.stroke;
+										});
+
+									return entered;
+								},
+								(update) => {
+									// Maybe here I need to grab by Group Class names??
+									// Get the enter working first though...
+									// let updated = update.attr('transform', (d) => {
+									// 	return `rotate(${d.rotate})`;
+									// });
+									// let markGroup = updated.attr('transform', (d) => {
+									// 	return `translate(${xScale(d.x)},${0}) rotate(${
+									// 		d.inverseRotate
+									// 	}) scale(${d.scale}) `;
+									// });
+									// let enteredMark = markGroup
+									// 	.append('path')
+									// 	.attr('d', (d) => d.path)
+									// 	.style('stroke', (d) => {
+									// 		return d.stroke;
+									// 	});
+								}
+							);
 					}
 				};
 				console.log('## Extension Run ##');
