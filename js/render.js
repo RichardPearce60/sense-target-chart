@@ -91,5 +91,82 @@ define(['./d3.min'], function (d3) {
 			);
 	}
 
-	return { drawTargets, drawGroupArcs };
+	/**
+	 * drawMarks
+	 *
+	 * Draw the score marks onto the svg target
+	 *
+	 * @param {*} data - uses mark.o data created in chartlib.calculateMarkData
+	 * @param {*} svg - Target SVG to append new svg objects
+	 * @param {*} xScale - for how close the the center of the target the mark should be placed
+	 *
+	 */
+	function drawMarks(data, { svg, xScale }) {
+		const marks = svg
+			.selectAll('g')
+			.data(data, function (d) {
+				return d.id;
+			})
+			.join(
+				(enter) => {
+					// check a d3 example on how to label and select each object within the group
+
+					let entered = enter
+						.append('g')
+						.attr('data-value', (d) => d.id) // Possibly ID for pop up!
+						.attr('class', (d) => {
+							return 'target_marks_rotation ' + d.id;
+						})
+						.attr('transform', (d) => {
+							return `rotate(${d.rotate})`;
+						});
+
+					entered
+						.append('g')
+						.attr('class', (d) => {
+							return 'target_mark ' + d.id;
+						})
+						.attr('transform', (d) => {
+							return `translate(${xScale(d.x)},${0}) rotate(${
+								d.inverseRotate
+							}) scale(${d.scale}) `;
+						})
+
+						//let enteredMark = markGroup
+						.append('path')
+						.attr('d', (d) => d.path)
+						.style('stroke', (d) => {
+							return d.stroke;
+						});
+				},
+				(update) => {
+					let updated = update;
+					let rotateGroups = updated
+						.attr('data-value', (d) => d.id) // Possibly ID for pop up!
+						.attr('transform', (d) => {
+							return `rotate(${d.rotate})`;
+						});
+
+					let markGroups = update
+						.append('g')
+						.attr('class', (d) => {
+							return 'target_mark ' + d.id;
+						})
+						.attr('transform', (d) => {
+							return `translate(${xScale(d.x)},${0}) rotate(${
+								d.inverseRotate
+							}) scale(${d.scale}) `;
+						})
+
+						//let enteredMark = markGroup
+						.append('path')
+						.attr('d', (d) => d.path)
+						.style('stroke', (d) => {
+							return d.stroke;
+						});
+				}
+			);
+	}
+
+	return { drawTargets, drawGroupArcs, drawMarks };
 });

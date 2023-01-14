@@ -87,6 +87,13 @@ define([
 						scope.data.o,
 						scope.data.group.arcs,
 						{
+							firstMeasure:
+								layout.qHyperCube.qDimensionInfo.length === 1 ? 'i1' : 'i2',
+							groupByField:
+								layout.qHyperCube.qDimensionInfo.length === 2 ? 'i1' : '',
+							extentField:
+								layout.qHyperCube.qMeasureInfo.length === 2 ? 'i3' : '',
+
 							dataV: scope.data.y,
 							dataA: scope.data.a,
 							showGroups:
@@ -132,70 +139,18 @@ define([
 							arc: scope.data.group.arc,
 							defaultColorScale: scope.data.group.colorScale,
 						});
+					} else {
+						// Remove arcs if already rendered
+						scope.mainDiv.svgDiv.svg.arcs.selectAll('path').remove();
 					}
 
 					// Draw Marks
-					drawMarks(scope.data.mark.o, {
+					render.drawMarks(scope.data.mark.o, {
 						svg: scope.mainDiv.svgDiv.svg.marks,
 						xScale: scope.data.target.xScale,
 					});
 
-					function drawMarks(data, { svg, xScale }) {
-						const marks = svg
-							.selectAll('g')
-							.data(data, function (d) {
-								return d.id;
-							})
-							.join(
-								(enter) => {
-									// check a d3 example on how to label and select each object within the group
 
-									let entered = enter
-										.append('g')
-										.attr('data-value', (d) => d.id); // Possibly ID for pop up!
-
-									let markRotate = entered
-										.attr('transform', (d) => {
-											return `rotate(${d.rotate})`;
-										})
-
-										.append('g');
-
-									let markGroup = entered.attr('transform', (d) => {
-										return `translate(${xScale(d.x)},${0}) rotate(${
-											d.inverseRotate
-										}) scale(${d.scale}) `;
-									});
-
-									let enteredMark = markGroup
-										.append('path')
-										.attr('d', (d) => d.path)
-										.style('stroke', (d) => {
-											return d.stroke;
-										});
-
-									return entered;
-								},
-								(update) => {
-									// Maybe here I need to grab by Group Class names??
-									// Get the enter working first though...
-									// let updated = update.attr('transform', (d) => {
-									// 	return `rotate(${d.rotate})`;
-									// });
-									// let markGroup = updated.attr('transform', (d) => {
-									// 	return `translate(${xScale(d.x)},${0}) rotate(${
-									// 		d.inverseRotate
-									// 	}) scale(${d.scale}) `;
-									// });
-									// let enteredMark = markGroup
-									// 	.append('path')
-									// 	.attr('d', (d) => d.path)
-									// 	.style('stroke', (d) => {
-									// 		return d.stroke;
-									// 	});
-								}
-							);
-					}
 				};
 				console.log('## Extension Run ##');
 				prep.mainPrep(scope, $element, scope.layout);

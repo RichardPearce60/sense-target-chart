@@ -226,7 +226,6 @@ define(['./d3.min'], function (d3) {
 			dataA,
 			showGroups,
 			sortTypeRandom,
-			targetXScaleRange,
 			markColor = 'i0a0',
 			markPath = 'M-2,-2 L2,2 M-2,2 L2,-2',
 			markScale = 1,
@@ -247,7 +246,9 @@ define(['./d3.min'], function (d3) {
 			return Math.floor(Math.random() * max);
 		};
 
-		//  === 'Length of Service'
+		console.log({ showGroups, sortTypeRandom });
+		console.log(d3.extent(dataV));
+
 		if (showGroups) {
 			// Generate a scale for each group
 			for (let i = 0; i < arcs.length; i++) {
@@ -264,17 +265,15 @@ define(['./d3.min'], function (d3) {
 						)
 					);
 				} else {
-					domain = d3.extent(dataV);
+					domain = [0, 1000]; // Will use a random number between these two extents
 				}
 
 				arcScale[i] = d3.scaleLinear().domain(domain).range(range);
 			}
 		} else if (!showGroups) {
-			// if we don't have segments then we just need the one scale...
+			// If its random we don't need the scale, we define the angle with a rnd number between 1 - 360
 			if (!sortTypeRandom) {
-				arcScale[0] = d3.scaleLinear().domain(d3.extent(dataA)).range([0, 360]);
-			} else {
-				arcScale[0] = d3.scaleLinear().domain(d3.extent(dataV)).range([0, 360]);
+				arcScale[0] = d3.scaleLinear().domain(d3.extent(dataA)).range([1, 359]);
 			}
 		}
 
@@ -287,16 +286,19 @@ define(['./d3.min'], function (d3) {
 			let score = data[i][firstMeasure];
 			let rotate = 0;
 
-			if (sortTypeRandom) {
-				rotate = arcScale[0](getRandomInt(359) + 1);
-			} else if (!sortTypeRandom) {
-				if (showGroups) {
-					rotate = arcScale[
-						_.findIndex(arcs, { [groupByField]: data[i][groupByField] }) // Using the group by field (same on both data and arcs) we find the index
-					](data[i][extentField]);
-				} else if (!showGroups) {
-					rotate = arcScale[0](data[i][extentField]);
-				}
+			if (sortTypeRandom && !showGroups) {
+				rotate = getRandomInt(358) + 1;
+			} else if (sortTypeRandom && showGroups) {
+				// Random within the confines of the arc
+				rotate = arcScale[
+					_.findIndex(arcs, { [groupByField]: data[i][groupByField] })
+				](getRandomInt(1000));
+			} else if (!sortTypeRandom && showGroups) {
+				rotate = arcScale[
+					_.findIndex(arcs, { [groupByField]: data[i][groupByField] }) // Using the group by field (same on both data and arcs) we find the index
+				](data[i][extentField]);
+			} else if (!sortTypeRandom && !showGroups) {
+				rotate = arcScale[0](data[i][extentField]);
 			}
 
 			rotate = rotate - 90; // Resolve the starting angle to 0

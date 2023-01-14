@@ -36,13 +36,19 @@ define(['./d3.min'], function (d3) {
 			.attr('height', '100%');
 
 		// Will contain the Target Circles
-		scope.mainDiv.svgDiv.svg.tc = scope.mainDiv.svgDiv.svg.append('g');
+		scope.mainDiv.svgDiv.svg.tc = scope.mainDiv.svgDiv.svg
+			.append('g')
+			.attr('class', 'Target');
 
 		// Will contain the Group Pie Arcs
-		scope.mainDiv.svgDiv.svg.arcs = scope.mainDiv.svgDiv.svg.append('g');
+		scope.mainDiv.svgDiv.svg.arcs = scope.mainDiv.svgDiv.svg
+			.append('g')
+			.attr('class', 'PieArcs');
 
 		// Will contain the marks
-		scope.mainDiv.svgDiv.svg.marks = scope.mainDiv.svgDiv.svg.append('g');
+		scope.mainDiv.svgDiv.svg.marks = scope.mainDiv.svgDiv.svg
+			.append('g')
+			.attr('class', 'Marks');
 
 		// Div holding the legend split into two divs, one for Target (circles) legend and one for performance (bar chart)
 		scope.mainDiv.mainLegend = scope.mainDiv
